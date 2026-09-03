@@ -1,527 +1,932 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import './productPage.css';
 
-function IconPhone(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="7" y="2.5" width="10" height="19" rx="1.5" />
-      <line x1="11" y1="18" x2="13" y2="18" />
-    </svg>
-  );
-}
+type Variant = {
+  id: string;
+  name?: string;
+  color: string;
+  storage: string;
+  image: string;
+  price: number;
+  stock: number;
+};
 
-function IconLock(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="5" y="10.5" width="14" height="10" rx="1.5" />
-      <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
-    </svg>
-  );
-}
+type Plan = {
+  id: string;
+  monthlyPayment: number;
+  tenureMonths: number;
+  interestRate: string | number;
+  cashback: number;
+  processingFee: number;
+};
 
-function IconCheck(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 12.5 9.5 18 20 6" />
-    </svg>
-  );
-}
+type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  brand: string;
+  category: string;
+  mrp: number;
+  basePrice: number;
+  variants: Variant[];
+};
 
-function IconShield(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M12 3 5 6v5.2c0 4.4 3 7.9 7 8.8 4-.9 7-4.4 7-8.8V6l-7-3Z" />
-      <path d="m9.2 12 2 2 3.6-4" />
-    </svg>
-  );
-}
+const money = (value: number) =>
+  `₹${Number(value || 0).toLocaleString('en-IN')}`;
 
-const PROGRESS_STEPS = [
-  { n: '01', label: 'Selection', status: 'done' },
-  { n: '02', label: 'Applicant details', status: 'active' },
-  { n: '03', label: 'KYC', status: 'upcoming' },
-  { n: '04', label: 'Review', status: 'upcoming' },
-];
+export default function ProductPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
 
-const OVERVIEW_CARDS = [
-  {
-    n: '01',
-    icon: <IconPhone />,
-    title: 'Product & EMI selection',
-    body: 'Your selected product, variant and EMI plan will appear here when you continue from a product page.',
-  },
-  {
-    n: '02',
-    icon: <IconLock />,
-    title: 'Applicant information',
-    body: 'Continue to the application form to securely provide the details we need for financing.',
-  },
-  {
-    n: '03',
-    icon: <IconShield />,
-    title: 'Digital KYC',
-    body: 'Identity verification is completed securely as part of the application, no paperwork required.',
-  },
-];
+  const [p, setP] = useState<Product | null>(null);
+  const [v, setV] = useState<Variant | null>(null);
 
-const TRUST_ITEMS = [
-  { title: 'Encrypted end to end', hint: 'Every field is protected in transit' },
-  { title: 'No hidden charges', hint: 'The EMI shown is the EMI you pay' },
-  { title: 'Fully paperless', hint: 'Sign and verify from your phone' },
-  { title: 'Track anytime', hint: 'Follow your status after you apply' },
-];
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plan, setPlan] = useState<Plan | null>(null);
 
-function CheckoutStyles() {
-  return (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-      .cf-page {
-        --paper: #EEEDE6;
-        --surface: #FFFFFF;
-        --ink: #171712;
-        --ink-soft: rgba(23, 23, 18, .60);
-        --ink-faint: rgba(23, 23, 18, .38);
-        --pine: #163B2C;
-        --pine-dim: #1E4E39;
-        --pine-tint: #E3EEE6;
-        --line: #DAD6C9;
-        --line-strong: #C6C0AE;
-        font-family: 'Inter', sans-serif;
-        color: var(--ink);
-        background: var(--paper);
-        padding: clamp(20px, 4vw, 56px);
-        display: flex;
-        justify-content: center;
-      }
-      .cf-page * { box-sizing: border-box; }
+  /*
+   * =========================================
+   * LOAD PRODUCT
+   * =========================================
+   */
 
-      .cf-shell { width: 100%; max-width: 1120px; }
+  useEffect(() => {
+    if (!slug) return;
 
-      /* utility bar */
-      .cf-utility {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 28px;
-        font-size: 13px;
-      }
-      .cf-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--ink-soft);
-        text-decoration: none;
-      }
-      .cf-back:hover { color: var(--ink); }
-      .cf-back svg { width: 14px; height: 14px; transform: rotate(180deg); }
-      .cf-utility-right {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        color: var(--ink-soft);
-      }
-      .cf-step-count {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12.5px;
-      }
-      .cf-secure-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px 5px 8px;
-        border: 1px solid var(--line-strong);
-        border-radius: 999px;
-        color: var(--pine);
-        font-size: 12.5px;
-        font-weight: 500;
-        background: var(--surface);
-      }
-      .cf-secure-pill svg { width: 14px; height: 14px; }
+    setLoading(true);
+    setError(false);
 
-      /* header + hero */
-      .cf-header {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: clamp(20px, 4vw, 40px);
-        align-items: end;
-        margin-bottom: 34px;
-      }
-      .cf-header h1 {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
-        font-size: clamp(2rem, 4vw, 2.9rem);
-        line-height: 1.08;
-        letter-spacing: -0.01em;
-        margin: 0 0 14px;
-      }
-      .cf-header p {
-        margin: 0;
-        font-size: 15px;
-        line-height: 1.6;
-        color: var(--ink-soft);
-        max-width: 42ch;
-      }
+    fetch(`/api/products/${encodeURIComponent(slug)}`)
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error('Product request failed');
+        }
 
-      .cf-hero {
-        background: var(--pine);
-        color: #F2F1EA;
-        padding: 22px 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .cf-hero-label {
-        font-size: 12.5px;
-        color: rgba(242,241,234,.65);
-      }
-      .cf-hero-amount {
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
-        font-size: clamp(2rem, 3.4vw, 2.6rem);
-        line-height: 1;
-      }
-      .cf-hero-amount span {
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        font-weight: 500;
-        color: rgba(242,241,234,.75);
-      }
-      .cf-hero-sub {
-        margin-top: 10px;
-        font-size: 12.5px;
-        color: rgba(242,241,234,.7);
-      }
+        return r.json();
+      })
+      .then((x) => {
+        const product = x.data as Product;
 
-      /* progress */
-      .cf-progress {
-        margin-bottom: 40px;
-      }
-      .cf-progress-track {
-        display: flex;
-        height: 3px;
-        background: var(--line);
-        margin-bottom: 12px;
-        overflow: hidden;
-      }
-      .cf-progress-fill {
-        height: 100%;
-        background: var(--pine);
-      }
-      .cf-progress-labels {
-        display: flex;
-        justify-content: space-between;
-      }
-      .cf-progress-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--ink-faint);
-      }
-      .cf-progress-item.is-done,
-      .cf-progress-item.is-active { color: var(--ink); }
-      .cf-progress-item b {
-        font-family: 'IBM Plex Mono', monospace;
-        font-weight: 500;
-        font-size: 11.5px;
-        color: var(--ink-faint);
-      }
-      .cf-progress-item.is-done b,
-      .cf-progress-item.is-active b { color: var(--pine); }
+        setP(product);
+        setV(product?.variants?.[0] || null);
+      })
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [slug]);
 
-      /* grid */
-      .cf-grid {
-        display: grid;
-        grid-template-columns: 1.55fr 1fr;
-        gap: clamp(18px, 3vw, 32px);
-        align-items: start;
-      }
+  /*
+   * =========================================
+   * LOAD EMI PLANS
+   * =========================================
+   */
 
-      .cf-card {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-left: 3px solid var(--pine);
-        padding: 22px clamp(18px, 3vw, 26px);
-        display: flex;
-        gap: 18px;
-      }
-      .cf-card + .cf-card { margin-top: 14px; }
-      .cf-card-index {
-        flex: none;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: var(--ink-faint);
-        padding-top: 2px;
-      }
-      .cf-card-icon {
-        flex: none;
-        width: 38px; height: 38px;
-        border-radius: 50%;
-        background: var(--pine-tint);
-        color: var(--pine);
-        display: flex; align-items: center; justify-content: center;
-      }
-      .cf-card-body h2 {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
-        font-size: 17px;
-        margin: 0 0 6px;
-      }
-      .cf-card-body p {
-        margin: 0;
-        font-size: 13.5px;
-        line-height: 1.6;
-        color: var(--ink-soft);
-        max-width: 52ch;
-      }
+  useEffect(() => {
+    if (!v || !slug) return;
 
-      .cf-note {
-        margin-top: 18px;
-        padding: 14px 18px;
-        background: var(--pine-tint);
-        font-size: 12.5px;
-        line-height: 1.6;
-        color: var(--pine-dim);
-      }
-      .cf-note strong { font-weight: 600; }
+    fetch(
+      `/api/products/${encodeURIComponent(
+        slug
+      )}/emi-plans?variantId=${encodeURIComponent(v.id)}`
+    )
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error('EMI request failed');
+        }
 
-      /* KYC list inside card 3 */
-      .cf-kyc-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-      .cf-kyc-list div { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
-      .cf-kyc-list svg { flex: none; color: var(--pine); }
+        return r.json();
+      })
+      .then((x) => {
+        setPlans(x.data || []);
+        setPlan(null);
+      })
+      .catch(() => {
+        setPlans([]);
+        setPlan(null);
+      });
+  }, [v, slug]);
 
-      /* sidebar */
-      .cf-sidebar { position: sticky; top: 24px; }
-      .cf-summary {
-        background: var(--surface);
-        border: 1px solid var(--line);
-      }
-      .cf-summary-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 22px;
-        border-bottom: 1px solid var(--line);
-      }
-      .cf-summary-head h3 {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
-        font-size: 16px;
-        margin: 0;
-      }
-      .cf-summary-status {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: var(--ink-soft);
-        border: 1px solid var(--line-strong);
-        padding: 2px 9px;
-      }
-      .cf-summary-rows { padding: 6px 22px; }
-      .cf-summary-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 11px 0;
-        border-bottom: 1px solid var(--line);
-        font-size: 13.5px;
-      }
-      .cf-summary-row:last-child { border-bottom: none; }
-      .cf-summary-row span { color: var(--ink-soft); }
-      .cf-summary-row strong { font-weight: 500; text-align: right; }
+  /*
+   * =========================================
+   * PRICE / DISCOUNT
+   * =========================================
+   */
 
-      .cf-summary-total {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        padding: 16px 22px;
-        background: var(--pine-tint);
-        font-family: 'Fraunces', serif;
-      }
-      .cf-summary-total span {
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        color: var(--pine-dim);
-      }
-      .cf-summary-total strong { font-size: 20px; font-weight: 500; color: var(--pine); }
+  const currentPrice = useMemo(() => {
+    if (!p || !v) return 0;
 
-      .cf-cta {
-        display: block;
-        text-align: center;
-        margin: 18px 22px 0;
-        padding: 14px 20px;
-        background: var(--ink);
-        color: var(--surface);
-        font-size: 14px;
-        font-weight: 600;
-        text-decoration: none;
-      }
-      .cf-cta:hover { background: var(--pine); }
-      .cf-cta:focus-visible { outline: 2px solid var(--pine); outline-offset: 3px; }
+    return Number(v.price || p.basePrice || 0);
+  }, [p, v]);
 
-      .cf-back-link {
-        display: block;
-        text-align: center;
-        margin: 12px 22px 22px;
-        font-size: 12.5px;
-        color: var(--ink-soft);
-        text-decoration: none;
-      }
-      .cf-back-link:hover { color: var(--ink); }
+  const discount = useMemo(() => {
+    if (!p || !v || !p.mrp || !v.price) {
+      return 0;
+    }
 
-      .cf-help {
-        display: flex;
-        gap: 12px;
-        margin-top: 16px;
-        padding: 16px 18px;
-        border: 1px solid var(--line);
-        font-size: 12.5px;
-        color: var(--ink-soft);
-        line-height: 1.55;
-      }
-      .cf-help strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 3px; font-size: 13px; }
+    return Math.max(
+      0,
+      Math.round((1 - v.price / p.mrp) * 100)
+    );
+  }, [p, v]);
 
-      /* trust strip */
-      .cf-trust {
-        margin-top: 44px;
-        padding-top: 22px;
-        border-top: 1px solid var(--line-strong);
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-      }
-      .cf-trust-item { display: flex; align-items: flex-start; gap: 10px; }
-      .cf-trust-item svg { flex: none; color: var(--pine); margin-top: 1px; }
-      .cf-trust-item strong { display: block; font-size: 13px; font-weight: 600; }
-      .cf-trust-item small { display: block; color: var(--ink-soft); font-size: 12px; margin-top: 2px; line-height: 1.4; }
+  /*
+   * =========================================
+   * RECOMMENDED PLAN
+   * =========================================
+   */
 
-      @media (max-width: 860px) {
-        .cf-header { grid-template-columns: 1fr; }
-        .cf-grid { grid-template-columns: 1fr; }
-        .cf-sidebar { position: static; }
-        .cf-trust { grid-template-columns: repeat(2, 1fr); }
-      }
-      @media (max-width: 560px) {
-        .cf-progress-labels span:not(.cf-progress-item b) {}
-        .cf-progress-item span.cf-progress-label-text { display: none; }
-        .cf-trust { grid-template-columns: 1fr; }
-      }
-    `}</style>
-  );
-}
+  const recommended = useMemo(() => {
+    if (!plans.length) return null;
 
-export default function CheckoutPage() {
-  const activeIndex = PROGRESS_STEPS.findIndex((s) => s.status === 'active');
-  const fillPercent = ((activeIndex + 0.5) / PROGRESS_STEPS.length) * 100;
+    return plans.reduce((a, b) =>
+      Number(a.monthlyPayment) <
+      Number(b.monthlyPayment)
+        ? a
+        : b
+    );
+  }, [plans]);
 
-  return (
-    <main className="cf-page">
-      <CheckoutStyles />
-      <div className="cf-shell">
+  /*
+   * =========================================
+   * LOADING
+   * =========================================
+   */
 
-        <div className="cf-utility">
-          <Link href="/" className="cf-back">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
-            Products
+  if (loading) {
+    return (
+      <main className="product-detail-page">
+        <div className="product-loading">
+          <span className="loading-spinner" />
+          <span>Loading product...</span>
+        </div>
+      </main>
+    );
+  }
+
+  /*
+   * =========================================
+   * ERROR
+   * =========================================
+   */
+
+  if (error || !p) {
+    return (
+      <main className="product-detail-page">
+        <div className="product-error">
+          <div className="error-icon">!</div>
+
+          <h1>Product unavailable</h1>
+
+          <p>
+            We couldn't load this product right now.
+            Please try again or return to products.
+          </p>
+
+          <Link
+            href="/"
+            className="back-home-btn"
+          >
+            ← Back to products
           </Link>
-          <div className="cf-utility-right">
-            <span className="cf-step-count">Step {activeIndex + 1} of {PROGRESS_STEPS.length}</span>
-            <span className="cf-secure-pill"><IconShield /> Secure application</span>
-          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const image =
+    v?.image ||
+    p.variants?.[0]?.image ||
+    '/placeholder-phone.png';
+
+  const inStock = Boolean(v && v.stock > 0);
+
+  return (
+    <main className="product-detail-page">
+      <div className="product-detail-container">
+
+        {/* =====================================
+            BREADCRUMB
+        ====================================== */}
+
+        <div className="product-breadcrumb">
+          <Link href="/">Products</Link>
+
+          <span>/</span>
+
+          {p.category && (
+            <>
+              <span>{p.category}</span>
+              <span>/</span>
+            </>
+          )}
+
+          <strong>{p.name}</strong>
         </div>
 
-        <section className="cf-header">
-          <div>
-            <h1>Complete your EMI application.</h1>
-            <p>Your selected product and EMI plan carry over automatically, so this next part only takes a few minutes.</p>
-          </div>
-          <div className="cf-hero">
-            <span className="cf-hero-label">Estimated repayment</span>
-            <div className="cf-hero-amount">₹2,499<span>/month</span></div>
-            <div className="cf-hero-sub">12 month plan, selected on the product page</div>
-          </div>
-        </section>
+        {/* =====================================
+            50 / 50 MAIN LAYOUT
+        ====================================== */}
 
-        <section className="cf-progress">
-          <div className="cf-progress-track">
-            <div className="cf-progress-fill" style={{ width: `${fillPercent}%` }} />
-          </div>
-          <div className="cf-progress-labels">
-            {PROGRESS_STEPS.map((step) => (
-              <div className={`cf-progress-item is-${step.status}`} key={step.n}>
-                <b>{step.n}</b>
-                <span className="cf-progress-label-text">{step.label}</span>
+        <div className="product-detail-shell">
+
+          {/* ===================================
+              LEFT SIDE
+          ==================================== */}
+
+          <section className="product-visual-section">
+
+            {/* IMAGE FRAME */}
+
+            <div className="product-image-frame">
+
+              <div className="image-topbar">
+
+                <span className="premium-label">
+                  PREMIUM DEVICE
+                </span>
+
+                {discount > 0 && (
+                  <span className="image-discount">
+                    {discount}% OFF
+                  </span>
+                )}
+
               </div>
-            ))}
-          </div>
-        </section>
 
-        <section className="cf-grid">
-          <div className="cf-main">
-            {OVERVIEW_CARDS.map((card, i) => (
-              <div className="cf-card" key={card.n}>
-                <span className="cf-card-index">{card.n}</span>
-                <span className="cf-card-icon">{card.icon}</span>
-                <div className="cf-card-body">
-                  <h2>{card.title}</h2>
-                  <p>{card.body}</p>
-                  {i === 2 && (
-                    <div className="cf-kyc-list">
-                      <div><IconCheck /> Identity verified against government ID</div>
-                      <div><IconCheck /> Your data stays encrypted throughout</div>
-                      <div><IconCheck /> Status updates as you progress</div>
-                    </div>
-                  )}
+              <div className="product-image-stage">
+                <img
+                  src={image}
+                  alt={p.name}
+                  className="product-main-image"
+                />
+              </div>
+
+              <div className="image-footer">
+
+                <div className="image-footer-item">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+
+                  <span>
+                    Secure marketplace
+                  </span>
                 </div>
+
+                <div className="image-footer-item">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="m5 12 4 4L19 6" />
+                  </svg>
+
+                  <span>
+                    Verified product
+                  </span>
+                </div>
+
               </div>
-            ))}
-            <div className="cf-note">
-              <strong>No payment happens on this page.</strong> This flow walks through a digital EMI application instead of a live payment gateway.
+            </div>
+
+            {/* STOCK */}
+
+            <div className="product-stock-bar">
+
+              <div className="stock-main">
+
+                <span
+                  className={`stock-dot ${
+                    inStock
+                      ? 'in-stock'
+                      : 'out-stock'
+                  }`}
+                />
+
+                <div>
+                  <strong>
+                    {inStock
+                      ? 'In stock'
+                      : 'Out of stock'}
+                  </strong>
+
+                  <small>
+                    {inStock
+                      ? `${v?.stock || 0} units available`
+                      : 'Currently unavailable'}
+                  </small>
+                </div>
+
+              </div>
+
+              {inStock && (
+                <span className="stock-ready">
+                  Ready to apply
+                </span>
+              )}
+
+            </div>
+
+            {/* PRODUCT BIO */}
+
+            <div className="product-bio">
+
+              <div className="bio-brand">
+                <span>{p.brand}</span>
+
+                <span>·</span>
+
+                <span>{p.category}</span>
+              </div>
+
+              <h1>{p.name}</h1>
+
+              <p>
+                {p.description ||
+                  'Premium device with flexible financing options.'}
+              </p>
+
+              <div className="bio-features">
+
+                <div>
+                  <span>✓</span>
+
+                  <div>
+                    <strong>Secure KYC</strong>
+                    <small>
+                      Fast digital verification
+                    </small>
+                  </div>
+                </div>
+
+                <div>
+                  <span>₹</span>
+
+                  <div>
+                    <strong>Flexible EMI</strong>
+                    <small>
+                      Multiple repayment options
+                    </small>
+                  </div>
+                </div>
+
+                <div>
+                  <span>↗</span>
+
+                  <div>
+                    <strong>Digital application</strong>
+                    <small>
+                      Simple online process
+                    </small>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </section>
+
+          {/* ===================================
+              RIGHT SIDE
+          ==================================== */}
+
+          <section className="product-purchase-section">
+
+            {/* HEADER */}
+
+            <div className="purchase-header">
+
+              <div className="purchase-kicker">
+                EMI FINANCING
+              </div>
+
+              <h2>
+                Choose your payment plan.
+              </h2>
+
+              <p>
+                Select your preferred variant and
+                EMI option to continue with the
+                application.
+              </p>
+
+            </div>
+
+            {/* PRICE */}
+
+            <div className="product-price-box">
+
+              <div>
+
+                <span className="price-label">
+                  Current price
+                </span>
+
+                <div className="price-line">
+
+                  <strong>
+                    {money(currentPrice)}
+                  </strong>
+
+                  {p.mrp > currentPrice && (
+                    <span className="old-price">
+                      {money(p.mrp)}
+                    </span>
+                  )}
+
+                </div>
+
+              </div>
+
+              {discount > 0 && (
+                <span className="save-badge">
+                  Save {discount}%
+                </span>
+              )}
+
+            </div>
+
+            {/* =================================
+                VARIANT SELECTION
+            ================================== */}
+
+            <div className="selection-section">
+
+              <div className="selection-heading">
+
+                <div>
+
+                  <span>01</span>
+
+                  <div>
+                    <strong>
+                      Select variant
+                    </strong>
+
+                    <small>
+                      Choose storage and colour
+                    </small>
+                  </div>
+
+                </div>
+
+                {v && (
+                  <b>
+                    {v.color} · {v.storage}
+                  </b>
+                )}
+
+              </div>
+
+              <div className="variant-options">
+
+                {p.variants.map((item) => {
+
+                  const selected =
+                    v?.id === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={item.stock < 1}
+                      className={`variant-option ${
+                        selected
+                          ? 'selected'
+                          : ''
+                      }`}
+                      onClick={() =>
+                        setV(item)
+                      }
+                    >
+
+                      <div className="variant-option-main">
+
+                        <span
+                          className={`variant-radio ${
+                            selected
+                              ? 'checked'
+                              : ''
+                          }`}
+                        >
+                          {selected && '✓'}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {item.color}
+                          </strong>
+
+                          <small>
+                            {item.storage}
+                          </small>
+                        </div>
+
+                      </div>
+
+                      <div className="variant-option-price">
+
+                        <strong>
+                          {money(item.price)}
+                        </strong>
+
+                        <small>
+                          {item.stock > 0
+                            ? `${item.stock} available`
+                            : 'Out of stock'}
+                        </small>
+
+                      </div>
+
+                    </button>
+                  );
+                })}
+
+              </div>
+            </div>
+
+            {/* =================================
+                EMI SELECTION
+            ================================== */}
+
+            <div className="selection-section emi-section">
+
+              <div className="selection-heading">
+
+                <div>
+
+                  <span>02</span>
+
+                  <div>
+                    <strong>
+                      Select EMI plan
+                    </strong>
+
+                    <small>
+                      Compare monthly repayments
+                    </small>
+                  </div>
+
+                </div>
+
+                <Link
+                  href="/emi-calculator"
+                  className="emi-help"
+                >
+                  EMI calculator →
+                </Link>
+
+              </div>
+
+              {plans.length > 0 ? (
+
+                <div className="emi-plans">
+
+                  {plans.map((item) => {
+
+                    const selected =
+                      plan?.id === item.id;
+
+                    const isRecommended =
+                      recommended?.id === item.id;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`emi-plan ${
+                          selected
+                            ? 'selected'
+                            : ''
+                        }`}
+                        onClick={() =>
+                          setPlan(item)
+                        }
+                      >
+
+                        <div className="emi-plan-left">
+
+                          <span
+                            className={`emi-radio ${
+                              selected
+                                ? 'checked'
+                                : ''
+                            }`}
+                          >
+                            {selected && '✓'}
+                          </span>
+
+                          <div>
+
+                            <div className="emi-monthly">
+                              {money(
+                                Number(
+                                  item.monthlyPayment
+                                )
+                              )}
+
+                              <span>
+                                /month
+                              </span>
+                            </div>
+
+                            <div className="emi-meta">
+
+                              <span>
+                                {item.tenureMonths}{' '}
+                                months
+                              </span>
+
+                              <span>•</span>
+
+                              <span>
+                                {Number(
+                                  item.interestRate
+                                ).toFixed(1)}
+                                % interest
+                              </span>
+
+                              {Number(
+                                item.processingFee
+                              ) > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    Fee{' '}
+                                    {money(
+                                      item.processingFee
+                                    )}
+                                  </span>
+                                </>
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        <div className="emi-plan-right">
+
+                          {isRecommended && (
+                            <span className="recommended-badge">
+                              Recommended
+                            </span>
+                          )}
+
+                          {Number(
+                            item.cashback || 0
+                          ) > 0 && (
+                            <span className="cashback-mini">
+                              ✦{' '}
+                              {money(
+                                item.cashback
+                              )}{' '}
+                              cashback
+                            </span>
+                          )}
+
+                        </div>
+
+                      </button>
+                    );
+                  })}
+
+                </div>
+
+              ) : (
+
+                <div className="plans-empty">
+                  <strong>
+                    EMI plans unavailable
+                  </strong>
+
+                  <span>
+                    No financing plans are
+                    available for this variant.
+                  </span>
+                </div>
+
+              )}
+
+              {/* SELECTED PLAN */}
+
+              {plan && (
+                <div className="selected-plan-box">
+
+                  <div className="selected-plan-icon">
+                    ✓
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Plan selected
+                    </strong>
+
+                    <p>
+                      {money(
+                        plan.monthlyPayment
+                      )}
+                      /month for{' '}
+                      {plan.tenureMonths}{' '}
+                      months ·{' '}
+                      {Number(
+                        plan.interestRate
+                      ).toFixed(1)}
+                      % interest rate.
+                    </p>
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* CASHBACK */}
+
+              {plan &&
+                Number(plan.cashback || 0) > 0 && (
+                  <div className="cashback-banner">
+
+                    <span className="cashback-symbol">
+                      ✦
+                    </span>
+
+                    <div>
+                      <strong>
+                        Get{' '}
+                        {money(plan.cashback)}{' '}
+                        cashback
+                      </strong>
+
+                      <small>
+                        Cashback applied with
+                        selected EMI plan.
+                      </small>
+                    </div>
+
+                  </div>
+                )}
+
+              {/* PROCEED */}
+
+              <button
+                type="button"
+                className="proceed-product-btn"
+                disabled={
+                  !v ||
+                  !plan ||
+                  v.stock < 1
+                }
+                onClick={() => {
+
+                  if (!v || !plan) return;
+
+                  router.push(
+                    `/application?product=${encodeURIComponent(
+                      p.slug
+                    )}&variant=${encodeURIComponent(
+                      v.id
+                    )}&plan=${encodeURIComponent(
+                      plan.id
+                    )}`
+                  );
+
+                }}
+              >
+
+                <span>
+                  Proceed with this plan
+                </span>
+
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m13 6 6 6-6 6" />
+                </svg>
+
+              </button>
+
+              <div className="proceed-note">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+
+                Secure application · No hidden
+                charges
+
+              </div>
+
+              <Link
+                href="/"
+                className="back-products"
+              >
+                ← Back to all products
+              </Link>
+
+            </div>
+          </section>
+        </div>
+
+        {/* =====================================
+            TRUST STRIP
+        ====================================== */}
+
+        <div className="product-trust-strip">
+
+          <div>
+            <span>✓</span>
+
+            <div>
+              <strong>
+                Secure KYC
+              </strong>
+
+              <small>
+                Protected verification
+              </small>
             </div>
           </div>
 
-          <aside className="cf-sidebar">
-            <div className="cf-summary">
-              <div className="cf-summary-head">
-                <h3>Application summary</h3>
-                <span className="cf-summary-status">Draft</span>
-              </div>
-              <div className="cf-summary-rows">
-                <div className="cf-summary-row"><span>Product</span><strong>Selected product</strong></div>
-                <div className="cf-summary-row"><span>Variant</span><strong>Selected variant</strong></div>
-                <div className="cf-summary-row"><span>EMI plan</span><strong>12 months</strong></div>
-              </div>
-              <div className="cf-summary-total">
-                <span>Monthly EMI</span>
-                <strong>₹2,499</strong>
-              </div>
-              <Link href="/application" className="cf-cta">Continue application</Link>
-              <Link href="/" className="cf-back-link">Back to products</Link>
-            </div>
+          <div>
+            <span>₹</span>
 
-            <div className="cf-help">
-              <div>
-                <strong>Need help?</strong>
-                Double-check your product and EMI selection before you start the application, it carries through automatically from here.
-              </div>
-            </div>
-          </aside>
-        </section>
+            <div>
+              <strong>
+                Flexible EMI
+              </strong>
 
-        <section className="cf-trust">
-          {TRUST_ITEMS.map((item) => (
-            <div className="cf-trust-item" key={item.title}>
-              <IconCheck />
-              <div>
-                <strong>{item.title}</strong>
-                <small>{item.hint}</small>
-              </div>
+              <small>
+                Choose your tenure
+              </small>
             </div>
-          ))}
-        </section>
+          </div>
+
+          <div>
+            <span>⚡</span>
+
+            <div>
+              <strong>
+                Quick approval
+              </strong>
+
+              <small>
+                Fast digital process
+              </small>
+            </div>
+          </div>
+
+          <div>
+            <span>◆</span>
+
+            <div>
+              <strong>
+                Verified product
+              </strong>
+
+              <small>
+                Trusted marketplace
+              </small>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </main>
   );

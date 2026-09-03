@@ -55,24 +55,26 @@ export default function ProductCard({
   selected = false,
   onCompare,
 }: ProductCardProps) {
-  if (!p) return null;
-
-  const variants = Array.isArray(p.variants)
+  const variants = Array.isArray(p?.variants)
     ? p.variants
     : [];
 
-  const emiPlans = Array.isArray(p.emiPlans)
+  const emiPlans = Array.isArray(p?.emiPlans)
     ? p.emiPlans
     : [];
 
   const firstVariant = variants[0];
 
   const price = Number(
-    firstVariant?.price ?? p.basePrice ?? 0
+    firstVariant?.price ??
+      p?.basePrice ??
+      0
   );
 
   const mrp = Number(
-    firstVariant?.mrp ?? p.mrp ?? 0
+    firstVariant?.mrp ??
+      p?.mrp ??
+      0
   );
 
   const image =
@@ -89,7 +91,9 @@ export default function ProductCard({
 
   const startingEmi = useMemo(() => {
     const validPlans = emiPlans
-      .map((plan) => Number(plan.monthlyPayment))
+      .map((plan) =>
+        Number(plan.monthlyPayment)
+      )
       .filter((value) => value > 0);
 
     return validPlans.length
@@ -112,18 +116,34 @@ export default function ProductCard({
     firstVariant.stock > 0 &&
     firstVariant.stock <= 5;
 
+  if (!p) return null;
+
+  /*
+   * IMPORTANT:
+   * Product detail URL is generated from slug.
+   *
+   * Example:
+   * /products/iphone-15
+   */
+  const productUrl = `/products/${encodeURIComponent(
+    p.slug
+  )}`;
+
   return (
     <article
       className={`product-card ${
-        selected ? 'product-card-selected' : ''
+        selected
+          ? 'product-card-selected'
+          : ''
       }`}
     >
       {/* =========================
-          IMAGE AREA
+          IMAGE
       ========================== */}
+
       <div className="product-card-media">
         <Link
-          href={`/products/${p.slug}`}
+          href={productUrl}
           className="product-image-link"
           aria-label={`View ${p.name}`}
         >
@@ -149,8 +169,8 @@ export default function ProductCard({
           )}
         </div>
 
-        <div className="image-actions">
-          {onCompare && (
+        {onCompare && (
+          <div className="image-actions">
             <button
               type="button"
               className={`compare-icon-btn ${
@@ -166,8 +186,8 @@ export default function ProductCard({
             >
               {selected ? '✓' : '⇄'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="device-tag">
           <span className="device-dot" />
@@ -178,6 +198,7 @@ export default function ProductCard({
       {/* =========================
           CONTENT
       ========================== */}
+
       <div className="product-card-content">
         <div className="product-meta">
           <span className="product-brand">
@@ -192,7 +213,7 @@ export default function ProductCard({
         </div>
 
         <Link
-          href={`/products/${p.slug}`}
+          href={productUrl}
           className="product-title-link"
         >
           <h2 className="product-title">
@@ -207,8 +228,9 @@ export default function ProductCard({
         )}
 
         {/* =========================
-            VARIANT INFORMATION
+            VARIANTS
         ========================== */}
+
         {variants.length > 0 && (
           <div className="variant-row">
             <div className="variant-count">
@@ -245,6 +267,7 @@ export default function ProductCard({
         {/* =========================
             PRICE
         ========================== */}
+
         <div className="price-section">
           <div className="price-line">
             <span className="selling-price">
@@ -260,14 +283,16 @@ export default function ProductCard({
 
           {mrp > price && (
             <span className="save-text">
-              You save {money(mrp - price)}
+              You save{' '}
+              {money(mrp - price)}
             </span>
           )}
         </div>
 
         {/* =========================
-            EMI HIGHLIGHT
+            EMI
         ========================== */}
+
         <div className="emi-highlight">
           <div className="emi-icon">
             ₹
@@ -280,14 +305,20 @@ export default function ProductCard({
 
             <strong>
               {startingEmi > 0
-                ? `${money(startingEmi)}/month`
+                ? `${money(
+                    startingEmi
+                  )}/month`
                 : 'View plans'}
             </strong>
           </div>
 
-          {bestPlan?.interestRate !== undefined && (
+          {bestPlan?.interestRate !==
+            undefined && (
             <div className="interest-pill">
-              {bestPlan.interestRate}% p.a.
+              {Number(
+                bestPlan.interestRate
+              ).toFixed(1)}
+              % p.a.
             </div>
           )}
         </div>
@@ -295,8 +326,11 @@ export default function ProductCard({
         {/* =========================
             CASHBACK
         ========================== */}
+
         {bestPlan &&
-          Number(bestPlan.cashback || 0) > 0 && (
+          Number(
+            bestPlan.cashback || 0
+          ) > 0 && (
             <div className="cashback-row">
               <span className="cashback-icon">
                 ✦
@@ -306,7 +340,9 @@ export default function ProductCard({
                 Get up to{' '}
                 <strong>
                   {money(
-                    Number(bestPlan.cashback)
+                    Number(
+                      bestPlan.cashback
+                    )
                   )}
                 </strong>{' '}
                 cashback
@@ -317,6 +353,7 @@ export default function ProductCard({
         {/* =========================
             FEATURES
         ========================== */}
+
         <div className="product-features">
           <span>
             <b>✓</b> Secure KYC
@@ -334,9 +371,10 @@ export default function ProductCard({
         {/* =========================
             ACTIONS
         ========================== */}
+
         <div className="product-actions">
           <Link
-            href={`/products/${p.slug}`}
+            href={productUrl}
             className="view-product-btn"
           >
             <span>
@@ -352,7 +390,9 @@ export default function ProductCard({
             <button
               type="button"
               className={`compare-btn ${
-                selected ? 'selected' : ''
+                selected
+                  ? 'selected'
+                  : ''
               }`}
               onClick={onCompare}
               aria-pressed={selected}

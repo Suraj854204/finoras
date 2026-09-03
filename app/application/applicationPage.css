@@ -1,0 +1,571 @@
+/* =========================================
+   TOKENS — shared language with the product page
+========================================= */
+
+.application-page {
+  --ink: #1a1712;
+  --ink-soft: #4a463d;
+  --muted: #837c6c;
+  --line: #e3ddcd;
+  --line-strong: #cfc7b0;
+  --canvas: #ffffff;
+  --paper: #f4f0e4;
+  --brass: #92642c;
+  --brass-deep: #6f4c20;
+  --brass-soft: #f1e4cc;
+  --good: #3f6b4a;
+  --good-soft: #e9efe6;
+  --bad: #a23b34;
+  --bad-soft: #f4e6e2;
+
+  --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+
+  padding-top: 32px;
+  padding-bottom: 70px;
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.application-page a {
+  font-family: var(--sans);
+}
+
+/* =========================================
+   TOP LOADING / ERROR (pre-step states)
+========================================= */
+
+.application-page > .loading,
+.application-page > .error {
+  max-width: 480px;
+  margin: 90px auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 30px;
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-align: center;
+}
+
+.application-page > .error {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.application-page > .error a,
+.application-page > .loading a {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+/* =========================================
+   STEP INDICATOR
+========================================= */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  max-width: 900px;
+  margin: 0 auto 30px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+}
+
+.steps span {
+  position: relative;
+  padding-bottom: 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.steps span.active {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.steps span.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -17px;
+  height: 2px;
+  background: var(--brass);
+}
+
+/* =========================================
+   LAYOUT
+========================================= */
+
+.application-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.15fr);
+  gap: 28px;
+  align-items: start;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* =========================================
+   CARD (summary / form shell)
+========================================= */
+
+.summary {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 30px;
+  background: var(--canvas);
+  box-shadow: 0 18px 40px rgba(26, 23, 18, 0.05);
+}
+
+.summary:not(.application-grid .summary) {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.summary h1 {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.summary h2 {
+  margin: 0 0 18px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.desc {
+  max-width: 46ch;
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   FORM ELEMENTS
+========================================= */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='date'],
+input:not([type]) {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 11px 13px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  transition: border-color 150ms ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.summary form label,
+.kyc-form label {
+  margin-top: 18px;
+}
+
+.summary form label:first-of-type,
+.kyc-form .form-grid label {
+  margin-top: 0;
+}
+
+/* =========================================
+   BUTTONS / LINKS
+========================================= */
+
+.proceed {
+  display: flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+
+.proceed:hover:not(:disabled) {
+  background: var(--brass-deep);
+}
+
+.proceed:disabled {
+  background: var(--line-strong);
+  cursor: not-allowed;
+}
+
+.cta {
+  display: block;
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.cta:hover {
+  color: var(--ink);
+}
+
+.outline-btn {
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.outline-btn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* =========================================
+   ERRORS
+========================================= */
+
+.error.small-error {
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 12px;
+}
+
+/* =========================================
+   SUCCESS BADGE
+========================================= */
+
+.success {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: var(--good-soft);
+  color: var(--good);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.success svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* =========================================
+   MINI PRODUCT SUMMARY
+========================================= */
+
+.mini-product {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.mini-product img {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--paper);
+  padding: 6px;
+}
+
+.mini-product div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mini-product b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-product span {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.mini-product strong {
+  color: var(--brass-deep);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* =========================================
+   ROWS
+========================================= */
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 11px 0;
+  font-size: 12.5px;
+}
+
+.row:last-of-type {
+  border-bottom: 0;
+}
+
+.row span {
+  color: var(--muted);
+}
+
+.row strong {
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+}
+
+/* =========================================
+   KYC FORM
+========================================= */
+
+.kyc-form {
+  max-width: 720px !important;
+}
+
+.kyc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--brass-soft);
+  color: var(--brass-deep);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.secure svg {
+  width: 12px;
+  height: 12px;
+}
+
+.notice {
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 13px 14px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.form-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.check input {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  accent-color: var(--brass);
+}
+
+/* =========================================
+   SUCCESS PAGE (step 3)
+========================================= */
+
+.success-page {
+  max-width: 480px !important;
+  text-align: center;
+}
+
+.success-page .success {
+  margin: 0 auto;
+}
+
+.big-check {
+  display: flex;
+  width: 58px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto 0;
+  border: 1px solid var(--good);
+  border-radius: 50%;
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.big-check svg {
+  width: 24px;
+  height: 24px;
+}
+
+.success-page h1 {
+  margin-top: 14px;
+}
+
+.success-page .desc {
+  margin: 8px auto 0;
+}
+
+.application-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 22px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--brass-soft);
+}
+
+.application-id small {
+  color: var(--brass-deep);
+  font-size: 11.5px;
+}
+
+.application-id strong {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.application-id .outline-btn {
+  margin-top: 4px;
+}
+
+.success-page .row {
+  text-align: left;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+  .application-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kyc-head {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .application-page {
+    padding-top: 20px;
+  }
+
+  .steps {
+    gap: 14px;
+    font-size: 11px;
+  }
+
+  .summary {
+    padding: 20px;
+  }
+
+  .summary h1 {
+    font-size: 23px;
+  }
+}
