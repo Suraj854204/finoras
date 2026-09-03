@@ -67,14 +67,14 @@ export default function ProductCard({
 
   const price = Number(
     firstVariant?.price ??
-      p?.basePrice ??
-      0
+    p?.basePrice ??
+    0
   );
 
   const mrp = Number(
     firstVariant?.mrp ??
-      p?.mrp ??
-      0
+    p?.mrp ??
+    0
   );
 
   const image =
@@ -131,11 +131,10 @@ export default function ProductCard({
 
   return (
     <article
-      className={`product-card ${
-        selected
+      className={`product-card ${selected
           ? 'product-card-selected'
           : ''
-      }`}
+        }`}
     >
       {/* =========================
           IMAGE
@@ -173,9 +172,8 @@ export default function ProductCard({
           <div className="image-actions">
             <button
               type="button"
-              className={`compare-icon-btn ${
-                selected ? 'active' : ''
-              }`}
+              className={`compare-icon-btn ${selected ? 'active' : ''
+                }`}
               onClick={onCompare}
               aria-label={
                 selected
@@ -306,21 +304,21 @@ export default function ProductCard({
             <strong>
               {startingEmi > 0
                 ? `${money(
-                    startingEmi
-                  )}/month`
+                  startingEmi
+                )}/month`
                 : 'View plans'}
             </strong>
           </div>
 
           {bestPlan?.interestRate !==
             undefined && (
-            <div className="interest-pill">
-              {Number(
-                bestPlan.interestRate
-              ).toFixed(1)}
-              % p.a.
-            </div>
-          )}
+              <div className="interest-pill">
+                {Number(
+                  bestPlan.interestRate
+                ).toFixed(1)}
+                % p.a.
+              </div>
+            )}
         </div>
 
         {/* =========================
@@ -389,11 +387,10 @@ export default function ProductCard({
           {onCompare && (
             <button
               type="button"
-              className={`compare-btn ${
-                selected
+              className={`compare-btn ${selected
                   ? 'selected'
                   : ''
-              }`}
+                }`}
               onClick={onCompare}
               aria-pressed={selected}
             >
